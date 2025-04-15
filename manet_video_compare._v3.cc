@@ -1,7 +1,7 @@
 /*
  * Autor: Thalles Stanziola
- * Simulador: NS-3
- * Descrição: Projeto para simular uma rede MANET para streaming de vídeo.
+ * Simulador: NS-3 (3.44)
+ * Descrição: Projeto de simulação de uma rede MANET para streaming de vídeo.
  * Data: 15/04/2025
  */
 
