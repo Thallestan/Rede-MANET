@@ -1,3 +1,11 @@
+/*
+ * Autor: Thalles Stanziola
+ * Simulador: NS-3
+ * Descrição: Projeto para simular uma rede MANET para streaming de vídeo.
+ * Data: 15/04/2025
+ */
+
+
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/internet-module.h"
