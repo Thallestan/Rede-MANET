@@ -1,7 +1,6 @@
 # Rede-MANET
 Projeto da disciplina de redes de computadores, simulação no NS-3 de uma rede do tipo MANET para streaming de vídeo;
 
-
 *Simulation Parameters*
 -Simulator: NS-3
 -Network Type:	Rede MANET (Ad-hoc)
@@ -21,5 +20,6 @@ Projeto da disciplina de redes de computadores, simulação no NS-3 de uma rede 
 -Fragmentation threshold:	2346 bytes
 -Buffer size:	1500 packets (por interface)
 
+Para executar colocar o .cc na pasta SCRATCH, compilar e executar o NS3 passando os parâmetros da simulação (Protocolo, número de nós, tempo de simulação, nó que será desligado, tempo que o nó será desligado).
 
 Desenvolvido por Thalles Stanziola
