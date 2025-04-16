@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#script para build do projeto
 # Caminhos
 NS3_DIR=~/ns-allinone-3.44/ns-3.44/
 NETANIM_DIR=~/ns-allinone-3.44/netanim-3.109
