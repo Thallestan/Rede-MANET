@@ -1,7 +1,8 @@
 /*
  * Autor: Thalles Stanziola
  * Simulador: NS-3 (3.44)
- * Descrição: Projeto de simulação de uma rede MANET para streaming de vídeo.
+ * Versão 3.0
+ * Descrição: Projeto de simulação de uma rede MANET para streaming de vídeo, teste com os protocolos AODV e OLSR, métricas capturadas pelo FlowMonitor.
  * Data: 15/04/2025
  */
 
@@ -18,9 +19,6 @@
 #include "ns3/netanim-module.h"
 #include "ns3/ipv4-flow-classifier.h"
 #include <algorithm>
-#include <iostream>
-#include <fstream>
-#include <vector>
 
 using namespace ns3;
 
@@ -29,54 +27,42 @@ NS_LOG_COMPONENT_DEFINE("ManetVideoCompare");
 int main(int argc, char *argv[])
 {
 
-
-  // Parâmetros configuráveis com valores padrão
-  std::string protocol = "AODV";
-  uint32_t nNodes = 10;
-  double simTime = 240.0;
-  uint32_t nFlows = 1;
-  double errorRate = 0.01;
-  double txPower = 20.0; // dBm
-  double maxSpeed = 5.0; // m/s
+  //Parâmetros da simulação
+  std::string protocol = "AODV"; // Protocolo simulado
+  uint32_t nNodes = 10; //Nós
+  double simTime = 240.0; // Tempo de simulação
+  uint32_t nFlows = 5; //Fluxos
+  double errorRate = 0.01; //Ruido do canal
+  double txPower = 20.0; // Potencia do wifi
+  double maxSpeed = 5.0; // velocidade da mobilidade
   double pktPerSec = 20.0; // pacotes/segundo
-  double failTime = 25.0; // segundos
-  uint32_t failNode = 1; // nó que falhará
-  bool enableCsv = true; // exportar CSV
+  double failTime = 60.0; // Tempo da falha
+  uint32_t failNode = 3; // nó que falhará
 
+  //Parâmetros via commandline
   CommandLine cmd;
   cmd.AddValue("protocol", "Protocolo de roteamento: AODV ou OLSR", protocol);
   cmd.AddValue("nNodes", "Número de nós", nNodes);
   cmd.AddValue("simTime", "Tempo de simulação (segundos)", simTime);
   cmd.AddValue("nFlows", "Número de fluxos de vídeo (pares cliente-servidor)", nFlows);
-  cmd.AddValue("errorRate", "Taxa de erro do canal (0-1)", errorRate);
-  cmd.AddValue("txPower", "Potência de transmissão WiFi (dBm)", txPower);
-  cmd.AddValue("maxSpeed", "Velocidade máxima de mobilidade (m/s)", maxSpeed);
-  cmd.AddValue("pktPerSec", "Intensidade do tráfego (pacotes/seg)", pktPerSec);
   cmd.AddValue("failTime", "Tempo para simular falha (segundos)", failTime);
   cmd.AddValue("failNode", "Nó que falhará", failNode);
-  cmd.AddValue("enableCsv", "Exportar métricas para CSV (0/1)", enableCsv);
   cmd.Parse(argc, argv);
 
   // Validação de parâmetros
   if (nNodes < nFlows * 2) {
     NS_FATAL_ERROR("Número de nós deve ser pelo menos o dobro do número de fluxos.");
   }
-  if (errorRate < 0 || errorRate > 1) {
-    NS_FATAL_ERROR("Taxa de erro deve estar entre 0 e 1");
-  }
   if (failNode >= nNodes) {
     NS_FATAL_ERROR("Nó de falha deve ser menor que o número total de nós");
   }
 
 
-  // Normalizar protocolo para maiúsculas
-  std::transform(protocol.begin(), protocol.end(), protocol.begin(), ::toupper);
-
   // Criar nós
   NodeContainer nodes;
   nodes.Create(nNodes);
 
-  // Configurar mobilidade
+  // Mobilidade dos nós
   MobilityHelper mobility;
   Ptr<PositionAllocator> positionAlloc = CreateObjectWithAttributes<GridPositionAllocator>(
       "MinX", DoubleValue(0.0),
@@ -92,7 +78,7 @@ int main(int argc, char *argv[])
                           "PositionAllocator", PointerValue(positionAlloc));
   mobility.Install(nodes);
 
-  // Configurar WiFi
+  // Módulo WiFi
   WifiHelper wifi;
   wifi.SetStandard(WIFI_STANDARD_80211b);
   wifi.SetRemoteStationManager("ns3::AarfWifiManager");
@@ -103,7 +89,7 @@ int main(int argc, char *argv[])
   phy.Set("TxPowerStart", DoubleValue(txPower));
   phy.Set("TxPowerEnd", DoubleValue(txPower));
 
-  // Configurar erro de recepção
+  // Ruído no canal
   Ptr<RateErrorModel> em = CreateObject<RateErrorModel>();
   em->SetAttribute("ErrorRate", DoubleValue(errorRate));
   phy.SetErrorRateModel("ns3::NistErrorRateModel");
@@ -113,7 +99,7 @@ int main(int argc, char *argv[])
 
   NetDeviceContainer devices = wifi.Install(phy, mac, nodes);
 
-  // Instalar pilha de Internet e roteamento
+  // Internet e roteamento
   InternetStackHelper stack;
   if (protocol == "AODV") {
     AodvHelper aodv;
@@ -135,7 +121,7 @@ int main(int argc, char *argv[])
   address.SetBase("10.0.0.0", "255.255.255.0");
   Ipv4InterfaceContainer interfaces = address.Assign(devices);
 
-  // Configurar aplicações (modelo VBR para vídeo)
+  // Aplicação
   for (uint32_t i = 0; i < nFlows; ++i) {
     uint32_t sender = i * 2;
     uint32_t receiver = i * 2 + 1;
@@ -165,11 +151,11 @@ int main(int argc, char *argv[])
     clientApp.Stop(Seconds(simTime));
   }
 
-  // Configurar monitoramento
+  // FlowMonitor
   FlowMonitorHelper flowmon;
   Ptr<FlowMonitor> monitor = flowmon.InstallAll();
 
-  // Configurar animação
+  // NetAnim
   AnimationInterface anim("manet_anim.xml");
   anim.EnablePacketMetadata(true);
   anim.EnableIpv4RouteTracking("routingtable.xml", Seconds(0), Seconds(5), Seconds(0.5));
@@ -186,7 +172,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  // Configurar evento de falha e recuperação
+  // Falha simulada
   Simulator::Schedule(Seconds(failTime), [failNode, failTime, nodes]() {
     NS_LOG_UNCOND("Falha simulada: Desligando a interface WiFi do nó " << failNode << " aos " << failTime << "s.");
     Ptr<Node> node = NodeList::GetNode(failNode);
@@ -211,28 +197,22 @@ int main(int argc, char *argv[])
     }
   });
 
-  // Executar simulação
+  // Executa a simulação
   Simulator::Stop(Seconds(simTime));
   Simulator::Run();
 
-  // Analisar resultados
+  // Analisa resultados
   monitor->CheckForLostPackets();
   Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier>(flowmon.GetClassifier());
   std::map<FlowId, FlowMonitor::FlowStats> stats = monitor->GetFlowStats();
 
-  // Variáveis para estatísticas agregadas
+  // Variáveis para estatísticas 
   double totalThroughput = 0.0;
   double totalPacketLoss = 0.0;
   double totalDelay = 0.0;
   double totalJitter = 0.0;
   uint32_t validFlows = 0;
 
-  // Arquivo CSV para exportação
-  std::ofstream csvFile;
-  if (enableCsv) {
-    csvFile.open(protocol + "_metrics.csv");
-    csvFile << "FlowID,Source,Destination,Throughput(Kbps),PacketLoss(%),Delay(ms),Jitter(ms),Efficiency(%)\n";
-  }
 
   std::cout << "\n========== MÉTRICAS COLETADAS ==========\n";
   for (auto &flow : stats) {
@@ -262,21 +242,12 @@ int main(int argc, char *argv[])
       }
       std::cout << "  Eficiência:           " << efficiency << "%\n";
 
-      // Acumular para estatísticas agregadas
       totalThroughput += throughputKbps;
       totalPacketLoss += lossPercent;
       totalDelay += avgDelay;
       totalJitter += avgJitter;
       validFlows++;
-
-      // CSV
-      if (enableCsv) {
-        csvFile << flow.first << "," << t.sourceAddress << "," << t.destinationAddress << ","
-                << throughputKbps << "," << lossPercent << "," << avgDelay << "," 
-                << avgJitter << "," << efficiency << "\n";
-      }
     }
-    std::cout << std::endl;
   }
 
   // Calcular e mostrar estatísticas agregadas
@@ -292,10 +263,6 @@ int main(int argc, char *argv[])
   std::string fileName = protocol + "_flowmon.xml";
   monitor->SerializeToXmlFile(fileName, true, true);
 
-  if (enableCsv) {
-    csvFile.close();
-    std::cout << "\nMétricas exportadas para: " << protocol << "_metrics.csv\n";
-  }
 
   Simulator::Destroy();
   return 0;
