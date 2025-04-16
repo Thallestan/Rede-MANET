@@ -1,5 +1,5 @@
 #!/bin/bash
-#script para build do projeto
+#script para execução do projeto
 
 # Caminho do diretório do NS-3
 NS3_DIR=~/ns-allinone-3.44/ns-3.44
