@@ -24,12 +24,12 @@ cd "$NS3_DIR"
 # Verificar se o executável existe
 if [ ! -f "$EXEC" ]; then
   echo "Erro: Executável $EXEC não encontrado!"
-  echo "ℹCompile com: cmake --build build -j$(nproc)"
+  echo "Compile com: cmake --build build -j$(nproc)"
   exit 1
 fi
 
 # Executar simulação
-echo "🚀 Rodando simulação:"
+echo "   Rodando simulação:"
 echo "   Protocolo: $PROTO"
 echo "   Nós: $NODES"
 echo "   Fluxos: $FLOWS"
@@ -49,6 +49,6 @@ else
 fi
 
 # Abrir visualização no NetAnim, se disponível
-#  echo "🎬 Abrindo o NetAnim..."
+#  echo "Abrindo o NetAnim..."
 #    cd /home/username_regex/ns-allinone-3.44/netanim-3.109/build/bin
 #    ./netanim
